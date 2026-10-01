@@ -52,9 +52,9 @@ function App(){
   if(n!=="Menü" && n!=="Ambulanslar" && n!=="Hizmet Araçları" && !can(n==="Tanım Yönetimi"?"Ayarlar":n)){alert("Bu bölüme erişim yetkiniz yok.");return}
   setVehicleClass(undefined); setPage(known.includes(n)?n:"Menü");
  }
- if(!login)return <div className="loginWrap modernLogin"><div className="loginCard"><div className="brandMark"><Ambulance size={38}/></div><h1>AMBULANS YÖNETİM SİSTEMİ</h1><p>İzmir Ambulans Servisi Teknik Yönetim Sistemi</p><form onSubmit={doLogin}><label>TC Kimlik No</label><input inputMode="numeric" maxLength={11} autoComplete="username" value={user} onChange={e=>setUser(e.target.value)}/><label>Parola</label><input autoComplete="current-password" type="password" value={pass} onChange={e=>setPass(e.target.value)}/><button>Giriş</button><button type="button" className="forgotBtn" onClick={()=>alert('Parola sıfırlama için sistem yöneticinizle iletişime geçin.')}>Parolamı Unuttum</button></form><div className="loginHint">Yetkili kullanıcı hesabınız ile giriş yapınız.</div><small>AYS V14 • Powered by DUMAN • © 2026 Tüm hakları saklıdır.</small></div></div>;
+ if(!login)return <div className="loginWrap modernLogin"><div className="loginCard"><div className="brandMark"><Ambulance size={38}/></div><h1>AMBULANS YÖNETİM SİSTEMİ</h1><p>İzmir Ambulans Servisi Teknik Yönetim Sistemi</p><form onSubmit={doLogin}><label>TC Kimlik No</label><input inputMode="numeric" maxLength={11} autoComplete="username" value={user} onChange={e=>setUser(e.target.value)}/><label>Parola</label><input autoComplete="current-password" type="password" value={pass} onChange={e=>setPass(e.target.value)}/><button>Giriş</button><button type="button" className="forgotBtn" onClick={()=>alert('Parola sıfırlama için sistem yöneticinizle iletişime geçin.')}>Parolamı Unuttum</button></form><div className="loginHint">Yetkili kullanıcı hesabınız ile giriş yapınız.</div><small>AYS V16 • Powered by DUMAN • © 2026 Tüm hakları saklıdır.</small></div></div>;
  const visible=vehicles.filter(v=>(!vehicleClass||v.arac_sinifi===vehicleClass)&&(`${v.plaka||""} ${v.marka} ${v.model||""}`).toLowerCase().includes(q.toLowerCase()));
- return <div className="app"><aside><div className="logo"><Ambulance/><span>AYS</span></div>{[["Analiz","Analiz"],["Araçlar","Araçlar"],["Zimmetli Ambulanslar","Zimmetli Ambulanslar"],["Teknik Destek Talep / Çağrı Kayıt","Teknik Destek Talep / Çağrı Kayıt"],["Ambulans Değişimi","Ambulans Değişimi"],["Trafik Kazaları","Trafik Kaza ve Hasar Yönetimi"],["Tıbbi Donanım","Tıbbi Donanım"],["Teknik Birim Deposu","Teknik Birim Deposu"],["Menü","Menü"]].filter(([m])=>m==="Menü"||can(m)).map(([m,n])=><button key={m} className={page===m?"active":""} onClick={()=>nav(m)}>{n}</button>)}<div className="asideFoot">Ambulans Yönetim Sistemi<br/><b>AYS V14 · Powered by DUMAN</b><br/><small>© 2026 Tüm hakları saklıdır.</small></div></aside><main>
+ return <div className="app"><aside><div className="logo"><Ambulance/><span>AYS</span></div>{[["Analiz","Analiz"],["Araçlar","Araçlar"],["Zimmetli Ambulanslar","Zimmetli Ambulanslar"],["Teknik Destek Talep / Çağrı Kayıt","Teknik Destek Talep / Çağrı Kayıt"],["Ambulans Değişimi","Ambulans Değişimi"],["Trafik Kazaları","Trafik Kaza ve Hasar Yönetimi"],["Tıbbi Donanım","Tıbbi Donanım"],["Teknik Birim Deposu","Teknik Birim Deposu"],["Menü","Menü"]].filter(([m])=>m==="Menü"||can(m)).map(([m,n])=><button key={m} className={page===m?"active":""} onClick={()=>nav(m)}>{n}</button>)}<div className="asideFoot">Ambulans Yönetim Sistemi<br/><b>AYS V16 · Powered by DUMAN</b><br/><small>© 2026 Tüm hakları saklıdır.</small></div></aside><main>
  <header><div><h2>{selected?selected.plaka:page}</h2><span>Ambulans Yönetimi • Teknik Yönetim Sistemi</span></div><div className="headActions"><button className="iconBtn" title="Yardım" onClick={()=>nav('Yardım')}><HelpCircle/></button><Bell/><button className="avatar avatarBtn fullUserName" title={displayName} onClick={()=>setProfileMenu(!profileMenu)}><UserCircle size={18}/><span>{displayName}</span></button>{profileMenu&&<UserMenu me={me} close={()=>setProfileMenu(false)} open={(m:string)=>{setProfileMenu(false);setProfileMode(m)}} nav={nav} logout={logout}/>}</div></header>
  {page==="Analiz"&&!selected&&<Dashboard vehicles={vehicles}/>} 
  {["Araçlar","Ambulanslar","Hizmet Araçları"].includes(page)&&!selected&&<VehicleList vehicles={visible} q={q} setQ={setQ} setSelected={setSelected} newVehicle={()=>{setNewVehicle({...emptyVehicle,arac_sinifi:vehicleClass||"AMBULANS"});setShowNewVehicle(true)}} title={page} me={me} onUpdated={()=>loadVehicles(false)}/>} 
@@ -84,53 +84,64 @@ function ApprovalPage(){const [rows,setRows]=useState<any[]>([]);const [error,se
 
 function Dashboard({vehicles}:any){
  const amb=vehicles.filter((v:any)=>String(v.arac_sinifi||'').toUpperCase()==='AMBULANS');
+ const status=(v:any)=>String(v.durum||'').toUpperCase();
 
  const assigned=amb.filter((v:any)=>
-   v.istasyon_birim_id || v.istasyon || v.birim
+   Boolean(v.istasyon_birim_id || v.istasyon || v.birim_id || v.birim)
  );
 
  const faulty=amb.filter((v:any)=>{
-   const d=String(v.durum||'').toUpperCase();
-   return d.includes("ARIZA") || d.includes("SERVİS") || d.includes("SERVIS");
+   const d=status(v);
+   return d.includes("ARIZA") || d.includes("SERVÄ°S") || d.includes("SERVIS");
  });
 
  const devir=amb.filter((v:any)=>{
-   const d=String(v.durum||'').toUpperCase();
-   return d.includes("DEVIR") || d.includes("DEVİR");
+   const d=status(v);
+   return d.includes("DEVIR") || d.includes("DEVÄ°R");
  });
 
  const terkin=amb.filter((v:any)=>{
-   const d=String(v.durum||'').toUpperCase();
-   return d.includes("TERKIN") || d.includes("TERKİN");
+   const d=status(v);
+   return d.includes("TERKIN") || d.includes("TERKÄ°N");
  });
 
  const donusum=amb.filter((v:any)=>{
-   const d=String(v.durum||'').toUpperCase();
-   return d.includes("DONUSUM") || d.includes("DÖNÜŞÜM");
+   const d=status(v);
+   return d.includes("DONUSUM") || d.includes("DÃ–NÃœÅÃœM");
  });
 
- const totalReserve=Math.max(0,amb.length-assigned.length);
+ const excludedTypes=new Set([
+   "YENÄ°DOÄAN","YENIDOGAN",
+   "DÃ–RT SEDYELÄ°","DORT SEDYELI",
+   "OBEZ/YOÄUN BAKIM","OBEZ/YOGUN BAKIM",
+   "MOTOSÄ°KLET","MOTOSIKLET"
+ ]);
 
- const activeReserve=Math.max(
-   0,
-   totalReserve-devir.length-donusum.length-terkin.length-faulty.length
+ const excludedByType=amb.filter((v:any)=>
+   excludedTypes.has(String(v.ambulans_tipi||v.tip||"").toUpperCase())
  );
 
- const types:any={};
- amb.forEach((v:any)=>{
-   const t=v.ambulans_tipi||v.tip||"Diğer";
-   types[t]=(types[t]||0)+1;
- });
+ // Toplam Yedek = toplam ambulans - Ã¶zel tipler - istasyona zimmetli.
+ const totalReserve=Math.max(
+   0,
+   amb.length-excludedByType.length-assigned.length
+ );
+
+ // Aktif Yedek = toplam yedek - arÄ±zalÄ± - devir - terkin - dÃ¶nÃ¼ÅŸÃ¼m.
+ const activeReserve=Math.max(
+   0,
+   totalReserve-faulty.length-devir.length-terkin.length-donusum.length
+ );
 
  const groups:any={
   "Toplam Ambulans":amb.length,
-  "İstasyona Zimmetli Ambulans":assigned.length,
+  "Ä°stasyona Zimmetli Ambulans":assigned.length,
   "Toplam Yedek Ambulans":totalReserve,
-  "Aktif Yedek Ambulans":activeReserve,
-  "Arızalı Ambulans":faulty.length,
+  "ArÄ±zalÄ± Ambulans":faulty.length,
   "Devir":devir.length,
-  "Dönüşüm":donusum.length,
-  "Terkin":terkin.length
+  "DÃ¶nÃ¼ÅŸÃ¼m":donusum.length,
+  "Terkin":terkin.length,
+  "Aktif Yedek Ambulans":activeReserve
  };
 
  return <section className="analysisGrid">
@@ -140,13 +151,8 @@ function Dashboard({vehicles}:any){
     <b>{v}</b>
    </div>
   )}
-  <div className="stat" key="types">
-    <h3>Ambulans Tür Dağılımı</h3>
-    {Object.entries(types).map(([k,v]:any)=><div key={k}>{k}: <b>{v}</b></div>)}
-  </div>
  </section>
 }
-
 function Stat({t,n,i}:any){return <div className="stat"><div className="statIcon">{i}</div><div><span>{t}</span><b>{n}</b></div></div>}
 function VehicleList({vehicles,q,setQ,setSelected,newVehicle,title,me,onUpdated}:any){const admin=(me?.roller||[]).some((x:string)=>['Sistem Yöneticisi','Yönetici'].includes(x));const [edit,setEdit]=useState<any>(null);const [f,setF]=useState<any>({});const rows=vehicles.filter((v:any)=>Object.entries(f).every(([k,val]:any)=>!val||String(v[k]??'').toLocaleLowerCase('tr-TR').includes(String(val).toLocaleLowerCase('tr-TR'))));const cols=[['plaka','Plaka'],['marka','Marka'],['model','Model'],['model_yili','Model Yılı'],['arac_sinifi','Tür'],['ambulans_tipi','Ambulans Türü'],['istasyon','İstasyon / Birim'],['durum','Durum'],['gosterge_km','KM']];return <section><div className="toolbar" style={{justifyContent:"flex-end"}}><button className="primary" onClick={newVehicle}><Plus size={18}/> Yeni Araç</button></div><div className="sectionTitle"><h3>{title}</h3><span>{rows.length} kayıt</span></div><div className="panel tableScroll vehicleTableWrap"><table className="dataTable"><thead><tr>{cols.map(([k,l])=><th key={k}>{l}</th>)}{admin&&<th>İşlem</th>}</tr><tr className="filterRow">{cols.map(([k])=><th key={k}><input placeholder="Filtrele…" value={f[k]||''} onChange={e=>setF({...f,[k]:e.target.value})}/></th>)}{admin&&<th/>}</tr></thead><tbody>{rows.map((v:any)=><tr key={v.arac_id} onClick={()=>setSelected(v)} style={{cursor:'pointer'}}><td><b>{v.plaka||'—'}</b></td><td>{v.marka||'—'}</td><td>{v.model||'—'}</td><td>{v.model_yili||'—'}</td><td>{v.arac_sinifi==='AMBULANS'?'Ambulans':'Hizmet Aracı'}</td><td>{v.ambulans_tipi||'—'}</td><td title={v.istasyon||''}>{v.istasyon||'—'}</td><td><span className={`status ${v.durum==='ARIZALI_SERVISTE'?'danger':''}`}>{statusLabel(v.durum)}</span></td><td>{Number(v.gosterge_km||0).toLocaleString('tr-TR')}</td>{admin&&<td onClick={e=>e.stopPropagation()}><button type="button" onClick={()=>setEdit({...v})}>Düzenle</button> <button type="button" onClick={async()=>{if(!confirm(`${v.plaka} pasife alınsın mı?`))return;try{await api(`/araclar/${v.arac_id}/yonetici`,{method:'DELETE'});onUpdated()}catch(e:any){alert(e.message)}}}>Sil</button></td>}</tr>)}</tbody></table>{!rows.length&&<Empty text="Kayıt bulunamadı."/>}</div>{edit&&<Modal title={`${edit.plaka} • Araç Bilgilerini Düzenle`} close={()=>setEdit(null)}><form className="formGrid" onSubmit={async(e:any)=>{e.preventDefault();try{await api(`/araclar/${edit.arac_id}/yonetici`,{method:'PUT',body:JSON.stringify(edit)});setEdit(null);onUpdated()}catch(err:any){alert(err.message)}}}><label>Plaka *<input required value={edit.plaka||''} onChange={e=>setEdit({...edit,plaka:e.target.value.toUpperCase()})}/></label><label>Marka *<input required value={edit.marka||''} onChange={e=>setEdit({...edit,marka:e.target.value})}/></label><label>Model<input value={edit.model||''} onChange={e=>setEdit({...edit,model:e.target.value})}/></label><label>Model Yılı<input type="number" value={edit.model_yili||''} onChange={e=>setEdit({...edit,model_yili:e.target.value})}/></label>{edit.arac_sinifi==='AMBULANS'&&<label>Ambulans Türü *<select required value={edit.ambulans_tipi||''} onChange={e=>setEdit({...edit,ambulans_tipi:e.target.value})}><option value="">Seçin</option><option value="PANELVAN">PANELVAN</option><option value="DÖRT SEDYELİ">DÖRT SEDYELİ</option><option value="KAR PALETLİ">KAR PALETLİ</option><option value="OBEZ/YOĞUN BAKIM">OBEZ/YOĞUN BAKIM</option><option value="YENİDOĞAN">YENİDOĞAN</option><option value="MOTOSİKLET">MOTOSİKLET</option></select></label>}<div className="formActions full"><button type="button" onClick={()=>setEdit(null)}>Vazgeç</button><button className="primary">Kaydet</button></div></form></Modal>}</section>}
 function VehicleDetail({v,back,onUpdated}:any){const navSupportFallback=()=>{window.dispatchEvent(new CustomEvent('aftys-nav',{detail:'Teknik Destek Talep / Çağrı Kayıt'}));back()};const [data,setData]=useState<any>(null);const [tab,setTab]=useState("Genel Bakış");const [action,setAction]=useState<string|null>(null);const [form,setForm]=useState<any>({});const [identity,setIdentity]=useState<any>({alan_tipi:'PLAKA',degisiklik_tipi:'KAYIT_DUZELTME'});const [docFile,setDocFile]=useState<File|null>(null);const [services,setServices]=useState<any[]>([]);const [stations,setStations]=useState<any[]>([]);const load=()=>api(`/workspace/arac/${v.arac_id}/detay`).then(setData).catch((e:any)=>alert(e.message));useEffect(()=>{load();api('/workspace/servisler').then(setServices).catch(()=>{});api('/modules/lookup/stations').then(setStations).catch(()=>{})},[v.arac_id]);if(!data)return <section><button className="back" onClick={back}>← Araçlara dön</button><p>Yükleniyor…</p></section>;const a=data.arac;
@@ -256,7 +262,7 @@ function VehicleSelect({vehicles,value,onChange}:any){return <label>Araç *<sele
 
 function UserMenu({me,close,open,nav,logout}:any){const admin=(me?.roller||[]).some((x:string)=>['Sistem Yöneticisi','Yönetici'].includes(x));return <div className="userMenu"><div className="userMenuHead"><b>{me?.ad_soyad||'Kullanıcı'}</b><small>{(me?.roller||[]).join(', ')}</small></div><button onClick={()=>open('profile')}><UserCircle size={17}/> Kullanıcı Bilgileri / Düzenle</button><button onClick={()=>open('feedback')}><MessageSquare size={17}/> Şikayet / Öneriler</button><button onClick={()=>open('notifications')}><Bell size={17}/> Bildirim Tercihleri</button><button onClick={()=>open('password')}><LockKeyhole size={17}/> Şifre Değiştir</button><button onClick={()=>open('permissions')}><ShieldCheck size={17}/> Yetkilerimi Gör</button><button onClick={()=>{close();nav('Yardım')}}><HelpCircle size={17}/> Yardım / Kullanım Kılavuzu</button>{admin&&<button onClick={()=>{close();nav('Kullanıcılar')}}><Settings size={17}/> Yönetim Paneline Git</button>}<button onClick={()=>open('about')}><FileText size={17}/> Hakkında</button><button className="dangerText" onClick={logout}><LogOut size={17}/> Çıkış / Oturumu Kapat</button></div>}
 
-function ProfileModal({mode,me,close,refresh,nav,force}:any){const [form,setForm]=useState<any>({...(me||{}),bildirimler:me?.tercihler?.bildirimler||{}});async function saveProfile(e:any){e.preventDefault();await api('/v5/me/profile',{method:'PUT',body:JSON.stringify(form)});await refresh();close();alert('Bilgiler güncellendi.')}async function savePw(e:any){e.preventDefault();await api('/v5/me/password',{method:'PUT',body:JSON.stringify(form)});await refresh();close();alert('Parola değiştirildi.')}async function saveNotif(e:any){e.preventDefault();await api('/v5/me/preferences',{method:'PUT',body:JSON.stringify({bildirimler:form.bildirimler,tema:'SISTEM'})});await refresh();close();alert('Bildirim tercihleri kaydedildi.')}async function sendFeedback(e:any){e.preventDefault();await api('/v5/feedback',{method:'POST',body:JSON.stringify(form)});close();alert('Bildiriminiz kaydedildi.')}if(mode==='profile')return <Modal title="Kullanıcı Bilgileri" close={close}><form className="formGrid one" onSubmit={saveProfile}><label>TC Kimlik No<input disabled value={me?.tc_kimlik_no||me?.kullanici_adi||''}/></label><label>Ad Soyad<input required value={form.ad_soyad||''} onChange={e=>setForm({...form,ad_soyad:e.target.value})}/></label><label>E-posta<input value={form.eposta||''} onChange={e=>setForm({...form,eposta:e.target.value})}/></label><label>Telefon<input value={form.telefon||''} onChange={e=>setForm({...form,telefon:e.target.value})}/></label><button className="primary">Kaydet</button></form></Modal>;if(mode==='feedback')return <Modal title="Şikayet / Öneriler" close={close}><form className="formGrid one" onSubmit={sendFeedback}><label>Tür<select value={form.tur||'ONERI'} onChange={e=>setForm({...form,tur:e.target.value})}><option value="ONERI">Öneri</option><option value="SIKAYET">Şikayet</option><option value="HATA">Hata Bildirimi</option></select></label><label>Konu<input required value={form.konu||''} onChange={e=>setForm({...form,konu:e.target.value})}/></label><label>Açıklama<textarea required value={form.mesaj||''} onChange={e=>setForm({...form,mesaj:e.target.value})}/></label><button className="primary">Gönder</button></form></Modal>;if(mode==='password')return <Modal title={force?'Geçici Parolanızı Değiştirin':'Şifre Değiştir'} close={force?()=>{}:close}><form className="formGrid one" onSubmit={savePw}>{force&&<p className="warningNote">Yönetici tarafından verilen standart geçici parola ile giriş yaptınız. Devam etmek için yeni parola belirleyin.</p>}<label>Mevcut Parola<input type="password" required value={form.eski_parola||''} onChange={e=>setForm({...form,eski_parola:e.target.value})}/></label><label>Yeni Parola<input type="password" minLength={8} required value={form.yeni_parola||''} onChange={e=>setForm({...form,yeni_parola:e.target.value})}/></label><button className="primary">Şifreyi Değiştir</button></form></Modal>;if(mode==='notifications'){const opts=[['kritik','Kritik uyarılar'],['belge','Belge süresi uyarıları'],['is_emri','İş emri / talep bildirimleri'],['genel','Genel uygulama bildirimleri']];return <Modal title="Bildirim Tercihleri" close={close}><form onSubmit={saveNotif}>{opts.map(([k,l])=><label className="check" key={k}><input type="checkbox" checked={form.bildirimler?.[k]!==false} onChange={e=>setForm({...form,bildirimler:{...form.bildirimler,[k]:e.target.checked}})}/>{l}</label>)}<div className="formActions"><button type="button" onClick={close}>Vazgeç</button><button className="primary">Kaydet</button></div></form></Modal>}if(mode==='permissions')return <Modal title="Yetkilerim" close={close} wide><div className="permissionSummary">{Object.entries(me?.yetkiler||{}).map(([m,a]:any)=><div className="permSummaryRow" key={m}><b>{m}</b><span>{Object.entries(a).filter(([,v])=>v).map(([k])=>k).join(', ')||'Yetki yok'}</span></div>)}</div></Modal>;return <Modal title="Ambulans Yönetim Sistemi" close={close}><div className="aboutCard"><Ambulance size={44}/><h3>Ambulans Yönetim Sistemi (AYS)</h3><p>İzmir Ambulans Servisi Teknik Yönetim Sistemi</p><p>AYS V14 · © 2026 Tüm hakları saklıdır.</p><button onClick={()=>{close();nav('Yardım')}}>Kullanım Kılavuzunu Aç</button></div></Modal>}
+function ProfileModal({mode,me,close,refresh,nav,force}:any){const [form,setForm]=useState<any>({...(me||{}),bildirimler:me?.tercihler?.bildirimler||{}});async function saveProfile(e:any){e.preventDefault();await api('/v5/me/profile',{method:'PUT',body:JSON.stringify(form)});await refresh();close();alert('Bilgiler güncellendi.')}async function savePw(e:any){e.preventDefault();await api('/v5/me/password',{method:'PUT',body:JSON.stringify(form)});await refresh();close();alert('Parola değiştirildi.')}async function saveNotif(e:any){e.preventDefault();await api('/v5/me/preferences',{method:'PUT',body:JSON.stringify({bildirimler:form.bildirimler,tema:'SISTEM'})});await refresh();close();alert('Bildirim tercihleri kaydedildi.')}async function sendFeedback(e:any){e.preventDefault();await api('/v5/feedback',{method:'POST',body:JSON.stringify(form)});close();alert('Bildiriminiz kaydedildi.')}if(mode==='profile')return <Modal title="Kullanıcı Bilgileri" close={close}><form className="formGrid one" onSubmit={saveProfile}><label>TC Kimlik No<input disabled value={me?.tc_kimlik_no||me?.kullanici_adi||''}/></label><label>Ad Soyad<input required value={form.ad_soyad||''} onChange={e=>setForm({...form,ad_soyad:e.target.value})}/></label><label>E-posta<input value={form.eposta||''} onChange={e=>setForm({...form,eposta:e.target.value})}/></label><label>Telefon<input value={form.telefon||''} onChange={e=>setForm({...form,telefon:e.target.value})}/></label><button className="primary">Kaydet</button></form></Modal>;if(mode==='feedback')return <Modal title="Şikayet / Öneriler" close={close}><form className="formGrid one" onSubmit={sendFeedback}><label>Tür<select value={form.tur||'ONERI'} onChange={e=>setForm({...form,tur:e.target.value})}><option value="ONERI">Öneri</option><option value="SIKAYET">Şikayet</option><option value="HATA">Hata Bildirimi</option></select></label><label>Konu<input required value={form.konu||''} onChange={e=>setForm({...form,konu:e.target.value})}/></label><label>Açıklama<textarea required value={form.mesaj||''} onChange={e=>setForm({...form,mesaj:e.target.value})}/></label><button className="primary">Gönder</button></form></Modal>;if(mode==='password')return <Modal title={force?'Geçici Parolanızı Değiştirin':'Şifre Değiştir'} close={force?()=>{}:close}><form className="formGrid one" onSubmit={savePw}>{force&&<p className="warningNote">Yönetici tarafından verilen standart geçici parola ile giriş yaptınız. Devam etmek için yeni parola belirleyin.</p>}<label>Mevcut Parola<input type="password" required value={form.eski_parola||''} onChange={e=>setForm({...form,eski_parola:e.target.value})}/></label><label>Yeni Parola<input type="password" minLength={8} required value={form.yeni_parola||''} onChange={e=>setForm({...form,yeni_parola:e.target.value})}/></label><button className="primary">Şifreyi Değiştir</button></form></Modal>;if(mode==='notifications'){const opts=[['kritik','Kritik uyarılar'],['belge','Belge süresi uyarıları'],['is_emri','İş emri / talep bildirimleri'],['genel','Genel uygulama bildirimleri']];return <Modal title="Bildirim Tercihleri" close={close}><form onSubmit={saveNotif}>{opts.map(([k,l])=><label className="check" key={k}><input type="checkbox" checked={form.bildirimler?.[k]!==false} onChange={e=>setForm({...form,bildirimler:{...form.bildirimler,[k]:e.target.checked}})}/>{l}</label>)}<div className="formActions"><button type="button" onClick={close}>Vazgeç</button><button className="primary">Kaydet</button></div></form></Modal>}if(mode==='permissions')return <Modal title="Yetkilerim" close={close} wide><div className="permissionSummary">{Object.entries(me?.yetkiler||{}).map(([m,a]:any)=><div className="permSummaryRow" key={m}><b>{m}</b><span>{Object.entries(a).filter(([,v])=>v).map(([k])=>k).join(', ')||'Yetki yok'}</span></div>)}</div></Modal>;return <Modal title="Ambulans Yönetim Sistemi" close={close}><div className="aboutCard"><Ambulance size={44}/><h3>Ambulans Yönetim Sistemi (AYS)</h3><p>İzmir Ambulans Servisi Teknik Yönetim Sistemi</p><p>AYS V16 · © 2026 Tüm hakları saklıdır.</p><button onClick={()=>{close();nav('Yardım')}}>Kullanım Kılavuzunu Aç</button></div></Modal>}
 
 async function printProtectedHtml(path:string){const token=localStorage.getItem('aftys_token');const r=await fetch(`${API}${path}`,{headers:token?{Authorization:`Bearer ${token}`}:{}});if(!r.ok)throw new Error(`Yazdırma formu açılamadı (${r.status})`);const html=await r.text();const blob=new Blob([html],{type:'text/html'});window.open(URL.createObjectURL(blob),'_blank')}
 
